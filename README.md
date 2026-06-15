@@ -9,7 +9,29 @@ An AI-powered Business Intelligence platform that enables users to upload datase
 https://ai-business-intelligence-copilot-34aj4lqmsvchvd42hvnebm.streamlit.app
 
 ## 🚀 Features
+## 📸 Application Preview
 
+### Dashboard Overview
+
+![Dashboard Overview](assets/dashboard-overview.png)
+
+---
+
+### Sales Analytics Dashboard
+
+![Sales Analytics](assets/sales-analytics.png)
+
+---
+
+### Product Performance Analysis
+
+![Product Analysis](assets/product-analysis.png)
+
+---
+
+### AI-Powered Data Assistant
+
+![AI Query Interface](assets/ai-query-interface.png)
 ### 📂 Data Management
 - Upload CSV datasets
 - Automatic data cleaning and preprocessing
