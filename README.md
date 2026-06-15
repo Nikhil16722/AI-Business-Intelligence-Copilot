@@ -13,7 +13,7 @@ https://ai-business-intelligence-copilot-34aj4lqmsvchvd42hvnebm.streamlit.app
 
 ### Dashboard Overview
 
-![Dashboard Overview](assets/dashboard-overview.png)
+![Dashboard Overview](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/dashboard-overview.png.png)
 
 ---
 
