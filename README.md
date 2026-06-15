@@ -31,7 +31,7 @@ https://ai-business-intelligence-copilot-34aj4lqmsvchvd42hvnebm.streamlit.app
 
 ### AI-Powered Data Assistant
 
-![AI Query Interface](assets/ai-query-interface.png)
+![AI Query Interface](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/ai-query-interface.png.png)
 ### 📂 Data Management
 - Upload CSV datasets
 - Automatic data cleaning and preprocessing
