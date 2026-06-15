@@ -3,6 +3,10 @@
 An AI-powered Business Intelligence platform that enables users to upload datasets, visualize KPIs, generate business insights, and interact with data using natural language powered by Gemini AI.
 
 ---
+## 🌐 Live Demo
+
+🚀 **Try the application here:**  
+https://ai-business-intelligence-copilot-34aj4lqmsvchvd42hvnebm.streamlit.app
 
 ## 🚀 Features
 
