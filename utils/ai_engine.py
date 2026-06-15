@@ -1,17 +1,20 @@
 from dotenv import load_dotenv
 import google.generativeai as genai
+import streamlit as st
 import os
 
 load_dotenv()
 
-genai.configure(
-    api_key=os.secrets["GEMINI_API_KEY"]
-)
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    api_key = os.getenv("GEMINI_API_KEY")
+
+genai.configure(api_key=api_key)
 
 model = genai.GenerativeModel(
     "models/gemini-2.5-flash"
 )
-
 def generate_insights(df):
 
     summary = df.describe().to_string()
