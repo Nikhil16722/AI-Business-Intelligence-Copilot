@@ -19,13 +19,13 @@ https://ai-business-intelligence-copilot-34aj4lqmsvchvd42hvnebm.streamlit.app
 
 ### Sales Analytics Dashboard
 
-![Sales Analytics](assets/sales-analytics.png)
+![Sales Analytics](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/sales-analytics.png.png)
 
 ---
 
 ### Product Performance Analysis
 
-![Product Analysis](assets/product-analysis.png)
+![Product Analysis](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/product-analysis.png.png)
 
 ---
 
