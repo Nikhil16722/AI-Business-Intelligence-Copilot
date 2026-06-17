@@ -13,25 +13,25 @@ https://ai-business-intelligence-copilot-34aj4lqmsvchvd42hvnebm.streamlit.app
 
 ### Dashboard Overview
 
-![Dashboard Overview](assets/dashboard-overview.png)
+![Dashboard Overview](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/dashboard-overview.png.png)
 
 ---
 
 ### Sales Analytics Dashboard
 
-![Sales Analytics](assets/sales-analytics.png)
+![Sales Analytics](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/sales-analytics.png.png)
 
 ---
 
 ### Product Performance Analysis
 
-![Product Analysis](assets/product-analysis.png)
+![Product Analysis](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/product-analysis.png.png)
 
 ---
 
 ### AI-Powered Data Assistant
 
-![AI Query Interface](assets/ai-query-interface.png)
+![AI Query Interface](https://github.com/Nikhil16722/AI-Business-Intelligence-Copilot/blob/main/assets/ai-query-interface.png.png)
 ### 📂 Data Management
 - Upload CSV datasets
 - Automatic data cleaning and preprocessing
