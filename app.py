@@ -1,328 +1,441 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
+import os
 
 from utils.cleaning import clean_data
-from utils.kpi import calculate_kpis
+
 from utils.ai_engine import (
     generate_insights,
-    ask_question
+    ask_question,
+    summarize_pdf,
+    auto_summary
 )
 
-from database.db import save_to_db
+from utils.kpi import (
+    generate_dynamic_kpis,
+    get_dataset_quality
+)
+
+from utils.charts import (
+    create_dynamic_charts
+)
+
+from utils.pdf_utils import (
+    extract_pdf_text,
+    generate_pdf_report,
+    pdf_statistics,
+    preview_text
+)
+
+# -----------------------------------
+# Page Config
+# -----------------------------------
 
 st.set_page_config(
-    page_title="AI BI Copilot",
+    page_title="AI Business Intelligence Copilot",
     page_icon="📊",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# ---------------- CSS ---------------- #
+# -----------------------------------
+# Glassmorphism CSS
+# -----------------------------------
+
+# -----------------------------------
+# Glassmorphism CSS
+# -----------------------------------
 
 st.markdown("""
 <style>
 
-.main {
-    padding-top: 1rem;
+.stApp{
+background:
+linear-gradient(
+135deg,
+#0f172a,
+#111827,
+#1e293b
+);
 }
 
-.kpi-card{
-    background:#1e293b;
-    padding:20px;
-    border-radius:15px;
-    text-align:center;
-    box-shadow:0px 4px 12px rgba(0,0,0,0.3);
+.main-title{
+font-size:48px;
+font-weight:700;
+text-align:center;
+color:white;
+margin-bottom:10px;
 }
 
-.kpi-title{
-    color:#94a3b8;
-    font-size:18px;
+.subtitle{
+text-align:center;
+color:#cbd5e1;
+font-size:18px;
+margin-bottom:25px;
 }
 
-.kpi-value{
-    font-size:32px;
-    font-weight:bold;
-    color:white;
+.glass{
+background: rgba(255,255,255,0.08);
+backdrop-filter: blur(14px);
+-webkit-backdrop-filter: blur(14px);
+border-radius:20px;
+padding:20px;
+border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 8px 32px rgba(0,0,0,0.3);
+}
+
+.ai-box{
+background: rgba(255,255,255,0.08);
+backdrop-filter: blur(16px);
+-webkit-backdrop-filter: blur(16px);
+border-radius:20px;
+padding:25px;
+border:1px solid rgba(255,255,255,0.1);
+color:white;
+font-size:16px;
+line-height:1.8;
+box-shadow:0 8px 32px rgba(0,0,0,0.3);
+margin-top:10px;
 }
 
 </style>
-""", unsafe_allow_html=True)
-
-# ---------------- HEADER ---------------- #
-
-st.markdown("""
-<h1 style='text-align:center'>
-📊 AI Business Intelligence Copilot
-</h1>
-
-<p style='text-align:center;color:gray'>
-Upload CSV files, generate insights, analyze KPIs,
-and ask questions in natural language.
-</p>
-""", unsafe_allow_html=True)
-
-# ---------------- FILE UPLOAD ---------------- #
-
-uploaded_file = st.file_uploader(
-    "Upload CSV",
-    type=["csv"]
+""", unsafe_allow_html=True
 )
 
-if uploaded_file:
+# -----------------------------------
+# Header
+# -----------------------------------
 
-    df = pd.read_csv(uploaded_file)
+st.markdown("""
+<div class="main-title">
+📊 AI Business Intelligence Copilot
+</div>
+
+<div class="subtitle">
+Analyze CSV, Excel and PDF files using Gemini AI
+</div>
+""", unsafe_allow_html=True)
+
+# -----------------------------------
+# Sidebar
+# -----------------------------------
+
+st.sidebar.title("⚙ Dashboard")
+
+uploaded_file = st.sidebar.file_uploader(
+    "Upload File",
+    type=["csv", "xlsx", "pdf"]
+)
+
+# -----------------------------------
+# PDF FLOW
+# -----------------------------------
+
+if uploaded_file and uploaded_file.name.endswith(".pdf"):
+
+    text = extract_pdf_text(
+        uploaded_file
+    )
+
+    stats = pdf_statistics(text)
+
+    st.subheader("📄 PDF Overview")
+
+    c1,c2,c3 = st.columns(3)
+
+    c1.metric(
+        "Words",
+        stats["words"]
+    )
+
+    c2.metric(
+        "Characters",
+        stats["characters"]
+    )
+
+    c3.metric(
+        "Lines",
+        stats["lines"]
+    )
+
+    st.subheader("📖 Preview")
+
+    st.text_area(
+        "",
+        preview_text(text),
+        height=300
+    )
+
+    if st.button(
+        "🤖 Analyze PDF"
+    ):
+
+        with st.spinner(
+            "Analyzing..."
+        ):
+
+            summary = summarize_pdf(text)
+
+            st.subheader("🤖 AI PDF Summary")
+
+            st.markdown(
+                f"""
+                <div class='ai-box'>
+                {summary.replace(chr(10), "<br>")}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            report_path = (
+                generate_pdf_report(
+                    summary
+                )
+            )
+
+            with open(
+                report_path,
+                "rb"
+            ) as f:
+
+                st.download_button(
+                    "📥 Download Report",
+                    f,
+                    file_name="AI_Report.pdf"
+                )
+
+# -----------------------------------
+# CSV / EXCEL FLOW
+# -----------------------------------
+
+elif uploaded_file:
+
+    file_type = (
+        uploaded_file.name
+        .split(".")[-1]
+        .lower()
+    )
+
+    if file_type == "csv":
+
+        df = pd.read_csv(
+            uploaded_file
+        )
+
+    else:
+
+        df = pd.read_excel(
+            uploaded_file
+        )
 
     df = clean_data(df)
 
-    save_to_db(df)
+    # -------------------------
+    # Dynamic Filters
+    # -------------------------
 
-    # ---------------- SIDEBAR FILTERS ---------------- #
+    st.sidebar.markdown("---")
 
-    st.sidebar.title("⚙ Filters")
-
-    region_filter = st.sidebar.multiselect(
-        "Region",
-        df["Region"].unique(),
-        default=df["Region"].unique()
+    st.sidebar.subheader(
+        "Filters"
     )
 
-    product_filter = st.sidebar.multiselect(
-        "Product",
-        df["Product"].unique(),
-        default=df["Product"].unique()
+    categorical_cols = (
+        df.select_dtypes(
+            include="object"
+        )
+        .columns
+        .tolist()
     )
 
-    df = df[
-        (df["Region"].isin(region_filter))
-        &
-        (df["Product"].isin(product_filter))
-    ]
+    for col in categorical_cols[:5]:
 
-    # ---------------- DATASET ---------------- #
+        selected = (
+            st.sidebar.multiselect(
+                col,
+                df[col]
+                .dropna()
+                .unique(),
+                default=df[col]
+                .dropna()
+                .unique()
+            )
+        )
 
-    st.subheader("📂 Dataset Preview")
+        if selected:
+
+            df = df[
+                df[col]
+                .isin(selected)
+            ]
+
+    # -------------------------
+    # Dataset Overview
+    # -------------------------
+
+    st.subheader(
+        "📂 Dataset Overview"
+    )
 
     st.dataframe(
         df.head(),
         use_container_width=True
     )
 
-    # ---------------- KPI ---------------- #
+    # -------------------------
+    # KPI Cards
+    # -------------------------
 
-    kpis = calculate_kpis(df)
-
-    total_sales = kpis["sales"]
-    total_profit = kpis["profit"]
-    profit_margin = kpis["margin"]
-
-    c1,c2,c3 = st.columns(3)
-
-    with c1:
-        st.markdown(f"""
-        <div class='kpi-card'>
-        <div class='kpi-title'>💰 Total Sales</div>
-        <div class='kpi-value'>
-        ₹{total_sales:,.0f}
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with c2:
-        st.markdown(f"""
-        <div class='kpi-card'>
-        <div class='kpi-title'>📈 Total Profit</div>
-        <div class='kpi-value'>
-        ₹{total_profit:,.0f}
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with c3:
-        st.markdown(f"""
-        <div class='kpi-card'>
-        <div class='kpi-title'>🎯 Profit Margin</div>
-        <div class='kpi-value'>
-        {profit_margin:.2f}%
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.write("")
-
-    # ---------------- TOP METRICS ---------------- #
-
-    top_product = (
-        df.groupby("Product")["Sales"]
-        .sum()
-        .idxmax()
+    st.subheader(
+        "📊 Business KPIs"
     )
 
-    top_region = (
-        df.groupby("Region")["Sales"]
-        .sum()
-        .idxmax()
+    kpis = (
+        generate_dynamic_kpis(df)
     )
 
-    m1,m2 = st.columns(2)
-
-    m1.metric(
-        "🏆 Top Product",
-        top_product
+    cols = st.columns(
+        len(kpis)
     )
 
-    m2.metric(
-        "🌍 Best Region",
-        top_region
-    )
+    for i,(key,value) in enumerate(
+        kpis.items()
+    ):
 
-    # ---------------- CHARTS ---------------- #
-
-    monthly_sales = (
-        df.groupby(
-            df["Date"].dt.month
-        )["Sales"]
-        .sum()
-        .reset_index()
-    )
-
-    region_sales = (
-        df.groupby("Region")["Sales"]
-        .sum()
-        .reset_index()
-    )
-
-    product_sales = (
-        df.groupby("Product")["Sales"]
-        .sum()
-        .reset_index()
-    )
-
-    chart1, chart2 = st.columns(2)
-
-    with chart1:
-
-        fig1 = px.line(
-            monthly_sales,
-            x="Date",
-            y="Sales",
-            title="Monthly Sales Trend",
-            markers=True
+        cols[i].metric(
+            key,
+            value
         )
 
-        fig1.update_layout(
-            template="plotly_dark",
-            title_x=0.5
-        )
+    # -------------------------
+    # Quality Score
+    # -------------------------
+
+    quality = (
+        get_dataset_quality(df)
+    )
+
+    st.success(
+        f"Dataset Quality Score: {quality}%"
+    )
+
+    # -------------------------
+    # Auto Summary
+    # -------------------------
+
+    st.subheader("🧠 Dataset Summary")
+
+    summary_text = auto_summary(df)
+
+    st.markdown(
+        f"""
+        <div class='ai-box'>
+        {summary_text.replace(chr(10), "<br>")}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    # -------------------------
+    # Analytics Dashboard
+    # -------------------------
+
+    st.subheader(
+          "📈 Analytics Dashboard"
+    )
+
+    charts = create_dynamic_charts(df)
+
+    for i, chart in enumerate(charts):
 
         st.plotly_chart(
-            fig1,
-            use_container_width=True
-        )
-
-    with chart2:
-
-        fig2 = px.bar(
-            region_sales,
-            x="Region",
-            y="Sales",
-            title="Region Sales"
-        )
-
-        fig2.update_layout(
-            template="plotly_dark",
-            title_x=0.5
-        )
-
-        st.plotly_chart(
-            fig2,
-            use_container_width=True
-        )
-
-    # ---------------- SECOND ROW ---------------- #
-
-    c4,c5 = st.columns(2)
-
-    with c4:
-
-        fig3 = px.pie(
-            product_sales,
-            names="Product",
-            values="Sales",
-            title="Product Contribution"
-        )
-
-        fig3.update_layout(
-            template="plotly_dark",
-            title_x=0.5
-        )
-
-        st.plotly_chart(
-            fig3,
-            use_container_width=True
-        )
-
-    with c5:
-
-        fig4 = px.scatter(
-            df,
-            x="Sales",
-            y="Profit",
-            color="Product",
-            size="Quantity",
-            title="Sales vs Profit"
-        )
-
-        fig4.update_layout(
-            template="plotly_dark",
-            title_x=0.5
-        )
-
-        st.plotly_chart(
-            fig4,
-            use_container_width=True
-        )
-
-    # ---------------- AI INSIGHTS ---------------- #
+            chart,
+            use_container_width=True,
+            key=f"chart_{i}"
+            )
+        
+    # -------------------------
+    # AI Insights
+    # -------------------------
 
     st.markdown("---")
 
-    if st.button("🤖 Generate AI Insights"):
+    if st.button(
+        "🤖 Generate AI Insights"
+    ):
 
-        with st.spinner("Analyzing Data..."):
+        with st.spinner(
+            "Generating Insights..."
+        ):
 
-            insights = generate_insights(df)
-
-            st.markdown(
-                "### 🤖 AI Executive Summary"
+            insights = (
+                generate_insights(df)
             )
 
-            st.info(insights)
+            st.subheader("🤖 AI Executive Summary")
 
-    # ---------------- Q&A ---------------- #
+            st.markdown(
+                f"""
+                <div class='ai-box'>
+                {insights.replace(chr(10), "<br>")}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            report_path = (
+                generate_pdf_report(
+                    insights
+                )
+            )
+
+            with open(
+                report_path,
+                "rb"
+            ) as f:
+
+                st.download_button(
+                    "📥 Download Report",
+                    f,
+                    file_name="AI_Report.pdf"
+                )
+
+    # -------------------------
+    # AI Chat
+    # -------------------------
 
     st.markdown("---")
 
-    st.subheader("💬 Ask AI About Your Data")
+    st.subheader(
+        "💬 AI Data Assistant"
+    )
 
-    question = st.text_input(
-        "Ask a question"
+    question = st.chat_input(
+        "Ask anything about your data..."
     )
 
     if question:
 
-        with st.spinner("Thinking..."):
+        with st.chat_message(
+            "user"
+        ):
+            st.write(question)
 
-            answer = ask_question(
-                df,
-                question
-            )
+        answer = ask_question(
+            df,
+            question
+        )
 
-            st.success(answer)
+        with st.chat_message(
+            "assistant"
+        ):
+            st.write(answer)
 
-    # ---------------- FOOTER ---------------- #
+# -----------------------------------
+# Footer
+# -----------------------------------
 
-    st.markdown("---")
+st.markdown("---")
 
-    st.caption(
-        "AI Business Intelligence Copilot • Powered by Gemini AI, Streamlit, Plotly & SQL"
-    )
+st.caption(
+    "AI Business Intelligence Copilot • Gemini AI • Streamlit • Plotly • Pandas"
+)

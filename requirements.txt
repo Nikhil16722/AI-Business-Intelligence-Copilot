@@ -6,3 +6,8 @@ python-dotenv
 openpyxl
 sqlalchemy
 google-generativeai
+pdfplumber
+reportlab
+xlsxwriter
+PyPDF2
+reportlab

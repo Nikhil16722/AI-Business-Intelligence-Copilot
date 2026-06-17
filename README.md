@@ -113,24 +113,30 @@ Data Cleaning Layer
 ## 📁 Project Structure
 
 ```text
-AI-Business-Intelligence-Copilot
+AI-Business-Intelligence-Copilot/
 │
 ├── app.py
 ├── requirements.txt
 ├── README.md
-├── .env
+├── .gitignore
 │
-├── data/
-│   └── sales.csv
+├── assets/
+│   ├── dashboard.png
+│   ├── insights.png
+│   ├── upload.png
+│
+├── utils/
+│   ├── ai_engine.py
+│   ├── charts.py
+│   ├── cleaning.py
+│   ├── kpi.py
+│   ├── pdf_utils.py
 │
 ├── database/
-│   └── db.py
+│   ├── db.py
 │
-└── utils/
-    ├── ai_engine.py
-    ├── charts.py
-    ├── cleaning.py
-    └── kpi.py
+└── sample_data/
+    └── sample_data.csv
 ```
 
 ---

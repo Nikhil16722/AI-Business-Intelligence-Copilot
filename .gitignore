@@ -1,5 +1,7 @@
-.env
-business.db
 __pycache__/
 *.pyc
-.streamlit/
+.env
+*.db
+.streamlit/secrets.toml
+venv/
+.env.local
